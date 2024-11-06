@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home Library</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body onload="fetchBooks('Authors.Name')">
+    <h1>Home Library</h1>
+    <label for="sort-options">Sort By:</label>
+    <select id="sort-options" onchange="handleSortChange()">
+        <option value="Authors.Name">Author</option>
+        <option value="Books.Title">Title</option>
+        <option value="Books.Genre">Genre</option>
+    </select>
+
+    <input type="text" id="search-box" placeholder="Search by title or author" oninput="handleSearch()"/>
+    <table id="books-table">
+        <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Genre</th>
+        </tr>
+    </table>
+    <script>
+        function handleSortChange() {
+            const sortBy = document.getElementById('sort-options').value;
+            fetchBooks(sortBy, '');
+        }
+        function handleSearch() {
+            const searchQuery = document.getElementById('search-box').value;
+            fetchBooks('Authors.Name', searchQuery);
+        }
+        async function fetchBooks(sortBy = 'Authors.Name', searchQuery = '') {
+            console.log('Sorting by: ', sortBy);
+            try {
+                const response = await fetch('/books', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ sort_by: sortBy, search: searchQuery }),
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const books = await response.json();
+                const table = document.getElementById('books-table');
+
+                // Clear any existing rows (except the header)
+                while (table.rows.length > 1) {
+                    table.deleteRow(1);
+                }
+
+                books.forEach(book => {
+                    const row = table.insertRow();
+                    const titleCell = row.insertCell(0);
+                    const authorCell = row.insertCell(1);
+                    const genreCell = row.insertCell(2);
+                    titleCell.textContent = book.title;
+                    authorCell.textContent = book.author;
+                    genreCell.textContent = book.genre;
+                });
+            } catch (error) {
+                console.error('Error fetching books:', error);
+            }
+        }
+    </script>
+</body>
+</html>
